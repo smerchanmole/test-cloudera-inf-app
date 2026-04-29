@@ -1,17 +1,17 @@
 #!/bin/bash
+echo "🚀 Arrancando entorno desde GitHub en Cloudera Inference..."
 
-echo "---------------------------------------"
-echo "🚀 Arrancando Test de Vida en Cloudera"
-echo "---------------------------------------"
-
-# 1. Forzar logs en tiempo real
+# 1. Variables vitales para que Ubuntu y Python no se quejen
+export PIP_BREAK_SYSTEM_PACKAGES=1
 export PYTHONUNBUFFERED=1
 
-# 2. Asegurarnos de que las dependencias básicas están (por si no usas el Docker que creamos)
-# Si usas tu imagen personalizada, puedes comentar estas líneas para ir más rápido
-pip install --no-cache-dir fastapi uvicorn
+# 2. Instalación en modo USUARIO (--user) para evitar el error de "Permission denied"
+echo "📦 Instalando dependencias en la carpeta local del usuario..."
+python3 -m pip install --user --no-cache-dir fastapi uvicorn
 
-# 3. Lanzar la aplicación
-# Usamos 'exec' para que Python tome el control del proceso del contenedor
-echo "Lanzando Uvicorn en el puerto ${CDSW_APP_PORT}..."
-exec python3 app.py
+# 3. Detectar el puerto correcto (Inference a veces usa PORT en lugar de CDSW_APP_PORT)
+APP_PORT="${PORT:-${CDSW_APP_PORT:-8080}}"
+echo "🔥 Lanzando Uvicorn en el puerto ${APP_PORT}..."
+
+# 4. Lanzar la aplicación invocando el módulo directamente
+exec python3 -m uvicorn app:app --host 127.0.0.1 --port "${APP_PORT}"
